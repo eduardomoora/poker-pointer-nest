@@ -85,8 +85,7 @@ export class UsersWsService {
 
   async reset(webSocketServer: Server) {
     try { 
-     const updated = await this.userModel.updateMany({ points: null });
-     console.log('updates many variable', updated)
+      await this.userModel.updateMany({ points: null });
       const users =  await this.findAll();
       webSocketServer.emit('users', users);
       webSocketServer.emit('showCards', false);
