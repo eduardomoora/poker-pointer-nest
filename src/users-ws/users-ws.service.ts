@@ -72,9 +72,7 @@ export class UsersWsService {
   async point(webSocketServer: Server, client: Socket, payload: number) {
     try {
      const updated = await this.userModel.updateOne({socketId: client.id },{points: payload })
-     console.log('update user', updated);
       const users =  await this.findAll();
-      console.log('before',users)
       webSocketServer.emit('users', users);
     }
     catch(err){
@@ -84,7 +82,13 @@ export class UsersWsService {
   }
 
   async reset(webSocketServer: Server) {
-    try { 
+    try {
+      const sockets = await webSocketServer.fetchSockets();
+      const socketsConnected = sockets.map(s => s.id)
+      const usersDatabase =  await this.findAll();
+      let cleanUsersIds = usersDatabase.filter(item => !socketsConnected.includes(item.socketId));
+       cleanUsersIds = cleanUsersIds.map(user => user._id);
+      await this.userModel.deleteMany({_id: { $in: Object.values(cleanUsersIds)}})
       await this.userModel.updateMany({ points: null });
       const users =  await this.findAll();
       webSocketServer.emit('users', users);
@@ -98,8 +102,7 @@ export class UsersWsService {
 
   
   async showCards(webSocketServer: Server) {
-    try { 
-  
+    try {
       webSocketServer.emit('showCards', true);
     }
     catch(err){
